@@ -11,6 +11,10 @@ class User < ApplicationRecord
   has_many :followings, through: :relationships, source: :follow
   has_many :reverses_of_relationship, class_name: 'Relationship', foreign_key: 'follow_id'
   has_many :followers, through: :reverses_of_relationship, source: :user
+  has_many :skinships
+  has_many :favorites, through: :skinships, source: :like
+  has_many :reverses_of_skinship, class_name: 'Skinship', foreign_key: 'like_id'
+  has_many :likes, through: :reverses_of_skinship, source: :user
 
   def follow(other_user)
     unless self == other_user
@@ -25,6 +29,21 @@ class User < ApplicationRecord
 
   def following?(other_user)
     self.followings.include?(other_user)
+  end
+  
+  def like(other_user)
+    unless self == other_user
+      self.skinships.find_or_create_by(like_id: other_user.id)
+    end
+  end
+
+  def unlike(other_user)
+    skinship = self.skinships.find_by(like_id: other_user.id)
+    skinship.destroy if skinship
+  end
+
+  def favorite?(other_user)
+    self.favorites.include?(other_user)
   end
   
   def feed_microposts
